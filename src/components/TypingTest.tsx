@@ -1,61 +1,78 @@
 import React, { useEffect, useRef, useState } from "react";
 import { words } from "../word";
-
 const getRandomWords = (count: number) => {
-  const shuffled = [...words].sort(() => 0.5 - Math.random());
-  return shuffled.slice(0, count);
-};
-
-const getWordCount=()=>{
-    let number = Math.floor((1+Math.random() )* 11); 
-    return number;
-}
-
-const TypingTest: React.FC = () => {
-  const [input, setInput] = useState("");
-  const [wordList, setWordList] = useState<string[]>(getRandomWords(getWordCount()));
-  const [currentIndex, setCurrentIndex] = useState(0);
-  const [typedHistory, setTypedHistory] = useState<string[]>([]);
-  const [startTime, setStartTime] = useState<number | null>(null);
-  const [wpm, setWpm] = useState<number>(0);
-  const [darkMode, setDarkMode] = useState<boolean>(false);
-  const inputRef = useRef<HTMLInputElement>(null);
-  const [accuracy, setAccuracy] = useState<number>(0);
-
-  useEffect(() => {
-    inputRef.current?.focus();
-  }, []);
-
-  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    if (!startTime) setStartTime(Date.now());
-
-    const value = e.target.value;
-    if (value.endsWith(" ")) {
-      checkWord(value.trim());
-      setInput("");
-    } else {
-      setInput(value);
-    }
+    const shuffled = [...words].sort(() => 0.5 - Math.random());
+    return shuffled.slice(0, count);
   };
-
-  const checkWord = (typed: string) => {
-    const newHistory = [...typedHistory, typed];
-    setTypedHistory(newHistory);
-    const newIndex = currentIndex + 1;
-    setCurrentIndex(newIndex);
-    if (newIndex === wordList.length && startTime) {
-        const elapsed = (Date.now() - startTime) / 60000;
-        const correctWords = newHistory.filter((word, i) => wordList[i] === word).length;
-        setWpm(Math.round(correctWords / elapsed));
-        setAccuracy(Math.round((correctWords / wordList.length) * 100));
+  
+  const getWordCount = () => {
+    return Math.floor((1 + Math.random()) * 11);
+  };
+  
+  const TypingTest: React.FC = () => {
+    const [input, setInput] = useState("");
+    const [wordList, setWordList] = useState<string[]>(getRandomWords(getWordCount()));
+    const [currentIndex, setCurrentIndex] = useState(0);
+    const [typedHistory, setTypedHistory] = useState<string[]>([]);
+    const [startTime, setStartTime] = useState<number | null>(null);
+    const [wpm, setWpm] = useState<number>(0);
+    const [darkMode, setDarkMode] = useState<boolean>(false);
+    const inputRef = useRef<HTMLInputElement>(null);
+    const [accuracy, setAccuracy] = useState<number>(0);
+  
+    useEffect(() => {
+      inputRef.current?.focus();
+    }, []);
+  
+    const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+      if (!startTime) setStartTime(Date.now());
+  
+      const value = e.target.value;
+      if (value.endsWith(" ")) {
+        checkWord(value.trim());
+        setInput("");
+      } else {
+        setInput(value);
       }
-
-    if (newIndex === wordList.length && startTime) {
-      const elapsed = (Date.now() - startTime) / 60000;
-      const correctWords = newHistory.filter((word, i) => wordList[i] === word).length;
-      setWpm(Math.round(correctWords / elapsed));
-    }
-  };
+    };
+  
+    const checkWord = (typed: string) => {
+        const newHistory = [...typedHistory, typed];
+        const newIndex = currentIndex + 1;
+        setTypedHistory(newHistory);
+        setCurrentIndex(newIndex);
+      
+        if (startTime) {
+          const elapsed = (Date.now() - startTime) / 60000; // in minutes
+          
+          // Calculate correct words and their characters
+          let correctChars = 0;
+          let correctWords = 0;
+          let totalTypedChars = 0;
+      
+          newHistory.forEach((typedWord, i) => {
+            const expectedWord = wordList[i] || '';
+            totalTypedChars += typedWord.length;
+            
+            // Count fully correct words
+            if (typedWord === expectedWord) {
+              correctWords++;
+              correctChars += expectedWord.length;
+            }
+          });
+      
+          // Calculate Net WPM (only fully correct words count)
+          const netWPM = ((correctChars / 5) / elapsed);
+          
+          // Calculate accuracy based on correct characters
+          const accuracy = totalTypedChars > 0 
+            ? (correctChars / totalTypedChars) * 100 
+            : 0;
+      
+          setWpm(Math.round(netWPM));
+          setAccuracy(Math.round(accuracy));
+        }
+      };
 
   const restartTest = () => {
     setWordList(getRandomWords(getWordCount()));
@@ -145,12 +162,13 @@ const TypingTest: React.FC = () => {
           placeholder="Start typing..."
         />
 
-{wpm > 0 && (
+{currentIndex === wordList.length && (
   <div className="mt-6 text-center space-y-2 text-xl font-semibold">
     <div className="text-blue-500">Your WPM: {wpm}</div>
     <div className="text-blue-500">Accuracy: {accuracy}%</div>
   </div>
 )}
+
       </main>
       <footer className="text-center text-sm py-4 border-t dark:border-neutral-700 mt-10">
   <p className="mb-1">
