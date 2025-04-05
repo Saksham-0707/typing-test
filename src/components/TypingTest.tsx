@@ -6,15 +6,21 @@ const getRandomWords = (count: number) => {
   return shuffled.slice(0, count);
 };
 
+const getWordCount=()=>{
+    let number = Math.floor((1+Math.random() )* 11); 
+    return number;
+}
+
 const TypingTest: React.FC = () => {
   const [input, setInput] = useState("");
-  const [wordList, setWordList] = useState<string[]>(getRandomWords(10));
+  const [wordList, setWordList] = useState<string[]>(getRandomWords(getWordCount()));
   const [currentIndex, setCurrentIndex] = useState(0);
   const [typedHistory, setTypedHistory] = useState<string[]>([]);
   const [startTime, setStartTime] = useState<number | null>(null);
   const [wpm, setWpm] = useState<number>(0);
   const [darkMode, setDarkMode] = useState<boolean>(false);
   const inputRef = useRef<HTMLInputElement>(null);
+  const [accuracy, setAccuracy] = useState<number>(0);
 
   useEffect(() => {
     inputRef.current?.focus();
@@ -33,18 +39,26 @@ const TypingTest: React.FC = () => {
   };
 
   const checkWord = (typed: string) => {
-    setTypedHistory((prev) => [...prev, typed]);
+    const newHistory = [...typedHistory, typed];
+    setTypedHistory(newHistory);
+    const newIndex = currentIndex + 1;
+    setCurrentIndex(newIndex);
+    if (newIndex === wordList.length && startTime) {
+        const elapsed = (Date.now() - startTime) / 60000;
+        const correctWords = newHistory.filter((word, i) => wordList[i] === word).length;
+        setWpm(Math.round(correctWords / elapsed));
+        setAccuracy(Math.round((correctWords / wordList.length) * 100));
+      }
 
-    setCurrentIndex((prev) => prev + 1);
-
-    if (currentIndex + 1 === wordList.length && startTime) {
+    if (newIndex === wordList.length && startTime) {
       const elapsed = (Date.now() - startTime) / 60000;
-      setWpm(Math.round((currentIndex + 1) / elapsed));
+      const correctWords = newHistory.filter((word, i) => wordList[i] === word).length;
+      setWpm(Math.round(correctWords / elapsed));
     }
   };
 
   const restartTest = () => {
-    setWordList(getRandomWords(10));
+    setWordList(getRandomWords(getWordCount()));
     setTypedHistory([]);
     setInput("");
     setCurrentIndex(0);
@@ -92,10 +106,11 @@ const TypingTest: React.FC = () => {
 
   return (
     <div
-      className={`${
-        darkMode ? "bg-neutral-900 text-white" : "bg-white text-black"
-      } min-h-screen transition-colors`}
-    >
+    className={`${
+      darkMode ? "bg-neutral-900 text-white" : "bg-white text-black"
+    } min-h-screen flex flex-col justify-between transition-colors`}
+  >
+  
       <header className="flex justify-between items-center px-6 py-4 border-b dark:border-neutral-700">
         <h1 className="text-2xl font-semibold tracking-wide">
           Test your typing speed
@@ -130,12 +145,30 @@ const TypingTest: React.FC = () => {
           placeholder="Start typing..."
         />
 
-        {wpm > 0 && (
-          <div className="mt-6 text-center text-xl font-semibold text-green-500">
-            Your WPM: {wpm}
-          </div>
-        )}
+{wpm > 0 && (
+  <div className="mt-6 text-center space-y-2 text-xl font-semibold">
+    <div className="text-blue-500">Your WPM: {wpm}</div>
+    <div className="text-blue-500">Accuracy: {accuracy}%</div>
+  </div>
+)}
       </main>
+      <footer className="text-center text-sm py-4 border-t dark:border-neutral-700 mt-10">
+  <p className="mb-1">
+    Built by <span className="font-semibold">Saksham Doda</span> —{" "}
+    <a
+      href="https://github.com/sakshamdoda/typing-test"
+      className="text-indigo-500 hover:underline"
+      target="_blank"
+      rel="noopener noreferrer"
+    >
+      GitHub Repo
+    </a>
+  </p>
+  <p className="text-gray-500 dark:text-gray-400">
+    &copy; {new Date().getFullYear()} Saksham Doda. All rights reserved.
+  </p>
+</footer>
+
     </div>
   );
 };
