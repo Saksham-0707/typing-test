@@ -174,7 +174,7 @@ const getRandomWords = (count: number) => {
   <p className="mb-1">
     Built by <span className="font-semibold">Saksham Doda</span> —{" "}
     <a
-      href="https://github.com/sakshamdoda/typing-test"
+      href="https://github.com/saksham-0707/typing-test"
       className="text-indigo-500 hover:underline"
       target="_blank"
       rel="noopener noreferrer"
